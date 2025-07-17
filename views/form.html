@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com" />
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com" />
+    <title>Reporte de Error - Grabador de pantalla</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/form-styles.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="system-info">
+        <div class="info-item">
+          <span class="info-label">Usuario:</span>
+          <span id="userName" class="info-value">Cargando...</span>          
+        </div>
+        <div class="info-item">
+          <span class="info-label">Computadora:</span>
+          <span id="computerName" class="info-value">Cargando...</span>
+        </div>
+      </div>
+
+      <h2>Reporte de Error</h2>
+      <p class="form-description">Complete la información del error detectado</p>
+
+      <form id="errorForm" class="error-form">
+        <div class="form-group">
+          <label for="errorType" class="form-label">Tipo de Error:</label>
+          <select id="errorType" name="errorType" class="form-select" required>
+            <option value="" disabled selected>Seleccione una opción</option>
+            <option value="general">General (le pasa a todos)</option>
+            <option value="particular">Particular (solo me pasa a mi)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="errorSituation" class="form-label">Situación del Error:</label>
+          <select id="errorSituation" name="errorSituation" class="form-select" required>
+            <option value="" disabled selected>Seleccione una opción</option>
+            <option value="general">General (sucede con cualquier caso)</option>
+            <option value="particular">Particular (sucede solo en un caso)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="errorDescription" class="form-label">Descripción del Error:</label>
+          <textarea id="errorDescription" name="errorDescription" class="form-textarea" 
+                    placeholder="Describa detalladamente el error que está experimentando..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="videoPath" class="form-label">Video grabado (opcional):</label>
+          <input type="text" id="videoPath" name="videoPath" class="form-input" readonly placeholder="Ningún video grabado">
+        </div>
+
+        <div class="form-group">
+          <label for="recordVideo" class="form-label">¿Desea grabar un video?</label>
+          <select id="recordVideo" name="recordVideo" class="form-select">
+            <option value="">Seleccione una opción</option>
+            <option value="yes">Sí, grabar video</option>
+            <option value="no">No, continuar sin video</option>
+          </select>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">Enviar Reporte</button>
+          <button type="button" class="btn-cancel" onclick="window.location.href='index.html'">Nueva Grabación</button>
+        </div>
+      </form>
+    </div>
+
+    <script src="../src/renderer/recorder.js"></script>
+    <script>
+      const computerNameElement = document.getElementById('computerName')
+      const userNameElement = document.getElementById('userName')
+      const videoPathElement = document.getElementById('videoPath')
+      const errorForm = document.getElementById('errorForm')
+      const errorTypeElement = document.getElementById('errorType')
+      const errorSituationElement = document.getElementById('errorSituation')
+      const errorDescriptionElement = document.getElementById('errorDescription')
+      const recordVideoElement = document.getElementById('recordVideo')
+      let savedVideoPath = ''
+
+      // Función para guardar datos del formulario
+      function saveFormData() {
+        const formData = {
+          errorType: errorTypeElement.value,
+          errorSituation: errorSituationElement.value,
+          errorDescription: errorDescriptionElement.value,
+          timestamp: Date.now()
+        }
+        localStorage.setItem('formData', JSON.stringify(formData))
+      }
+
+      // Función para restaurar datos del formulario
+      function restoreFormData() {
+        const savedData = localStorage.getItem('formData')
+        if (savedData) {
+          const formData = JSON.parse(savedData)
+          errorTypeElement.value = formData.errorType || ''
+          errorSituationElement.value = formData.errorSituation || ''
+          errorDescriptionElement.value = formData.errorDescription || ''
+        }
+      }
+
+      // Función para limpiar datos guardados
+      function clearSavedFormData() {
+        localStorage.removeItem('formData')
+      }
+
+      window.addEventListener('DOMContentLoaded', async () => {
+        try {
+          const systemInfo = await window.electronAPI.getSystemInfo()
+          computerNameElement.textContent = systemInfo.computerName
+          userNameElement.textContent = systemInfo.userName
+        } catch (error) {
+          console.error('Error al cargar información del sistema:', error)
+          computerNameElement.textContent = 'No disponible'
+          userNameElement.textContent = 'No disponible'
+        }
+
+        // Restaurar datos del formulario si existen
+        restoreFormData()
+
+        // Verificar si hay un video grabado
+        try {
+          const videoPath = await window.electronAPI.getVideoPath()
+          if (videoPath) {
+            savedVideoPath = videoPath
+            videoPathElement.value = videoPath
+            recordVideoElement.value = 'no' // Ya tiene video, no necesita grabar otro
+          }
+        } catch (error) {
+          console.error('Error al obtener la ruta del video:', error)
+          videoPathElement.value = ''
+        }
+      })
+
+      // Guardar datos cuando el usuario cambie cualquier campo
+      errorTypeElement.addEventListener('change', saveFormData)
+      errorSituationElement.addEventListener('change', saveFormData)
+      errorDescriptionElement.addEventListener('input', saveFormData)
+
+      errorForm.addEventListener('submit', async (event) => {
+        event.preventDefault()
+        
+        // Validar que al menos tenga descripción del error
+        if (!errorDescriptionElement.value.trim()) {
+          alert('Por favor, complete la descripción del error.')
+          return
+        }
+
+        const formData = {
+          errorType: errorTypeElement.value,
+          errorSituation: errorSituationElement.value,
+          errorDescription: errorDescriptionElement.value,
+          videoPath: savedVideoPath,
+          computerName: computerNameElement.textContent,
+          userName: userNameElement.textContent,
+          timestamp: new Date().toISOString()
+        }
+
+        try {
+          const result = await window.electronAPI.saveErrorReport(formData)
+          if (result.success) {
+            clearSavedFormData() // Limpiar datos guardados
+            window.location.href = 'success.html'
+          } else {
+            alert('Error al enviar el reporte: ' + (result.error || 'Error desconocido'))
+          }
+        } catch (error) {
+          console.error('Error al enviar reporte:', error)
+          alert('Error al enviar el reporte. Intente nuevamente.')
+        }
+      })
+
+      recordVideoElement.addEventListener('change', (event) => {
+        if (event.target.value === 'yes') {
+          // Guardar datos actuales antes de ir a grabar
+          saveFormData()
+          window.location.href = 'index.html'
+        }
+      })
+    </script>
+  </body>
+</html> 

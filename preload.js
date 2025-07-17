@@ -1,0 +1,1 @@
+// Preload vacío, aquí podrías exponer APIs seguras a la ventana renderer. 

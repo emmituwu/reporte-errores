@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com" />
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com" />
+    <title>Grabador de pantalla</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/button-styles.css">
+  </head>
+  <body>
+    <div class="container">
+      
+      <h2>Grabador de pantalla</h2>
+      <div class="buttons-container">
+        <button id="startBtn">Iniciar grabación</button>
+        <button id="stopBtn">Detener grabación</button>
+      </div>
+      <div id="recordingIndicator" class="recording-indicator">
+        🔴 Grabando...
+      </div>
+    </div>
+
+    <script src="../src/renderer/recorder.js"></script>
+    <script>
+      const startBtn = document.getElementById('startBtn')
+      const stopBtn = document.getElementById('stopBtn')
+      const recordingIndicator = document.getElementById('recordingIndicator')
+      const computerNameElement = document.getElementById('computerName')
+      const userNameElement = document.getElementById('userName')
+
+      window.addEventListener('DOMContentLoaded', async () => {
+        try {
+          const systemInfo = await window.electronAPI.getSystemInfo()
+          computerNameElement.textContent = systemInfo.computerName
+          userNameElement.textContent = systemInfo.userName
+        } catch (error) {
+          console.error('Error al cargar información del sistema:', error)
+          computerNameElement.textContent = 'No disponible'
+          userNameElement.textContent = 'No disponible'
+        }
+      })
+
+      startBtn.addEventListener('click', () => {
+        window.electronAPI.startRecording()
+        recordingIndicator.classList.add('recording')
+        startBtn.disabled = true
+        stopBtn.disabled = false
+      })
+
+      stopBtn.addEventListener('click', () => {
+        window.electronAPI.stopRecording()
+        recordingIndicator.classList.remove('recording')
+        startBtn.disabled = false
+        stopBtn.disabled = true
+      })
+
+      stopBtn.disabled = true
+    </script>
+  </body>
+</html> 

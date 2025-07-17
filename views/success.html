@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com" />
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com" />
+    <title>Reporte Enviado - Grabador de pantalla</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/success-styles.css">
+  </head>
+  <body>
+    <div class="container">
+      <div class="success-card">
+        <div class="success-icon">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="12" cy="12" r="10" stroke="#4CAF50" stroke-width="2" fill="none"/>
+            <path d="M9 12l2 2 4-4" stroke="#4CAF50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        
+        <h2 class="success-title">¡Reporte Enviado Exitosamente!</h2>
+        
+        <p class="success-message">
+          Tu reporte de error ha sido guardado correctamente. 
+          Hemos registrado toda la información proporcionada y el video (si fue grabado).
+        </p>
+        
+        <div class="success-details">
+          <div class="detail-item">
+            <span class="detail-label">📁 Ubicación:</span>
+            <span class="detail-value">C:\Reporte de errores\</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">📅 Fecha:</span>
+            <span class="detail-value" id="reportDate"></span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">👤 Usuario:</span>
+            <span class="detail-value" id="userName"></span>
+          </div>
+        </div>
+        
+        <div class="action-buttons">
+          <button class="btn-new-report" onclick="window.location.href='welcome.html'">
+            📝 Reportar Otro Error
+          </button>
+          <button class="btn-exit" onclick="window.close()">
+            🚪 Salir
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Mostrar información del reporte
+      window.addEventListener('DOMContentLoaded', () => {
+        const reportDate = document.getElementById('reportDate')
+        const userName = document.getElementById('userName')
+        
+        // Mostrar fecha actual
+        const now = new Date()
+        reportDate.textContent = now.toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+        
+        // Obtener nombre de usuario del sistema
+        const { ipcRenderer } = require('electron')
+        ipcRenderer.invoke('get-system-info').then(systemInfo => {
+          userName.textContent = systemInfo.userName
+        }).catch(() => {
+          userName.textContent = 'No disponible'
+        })
+      })
+    </script>
+  </body>
+</html> 
