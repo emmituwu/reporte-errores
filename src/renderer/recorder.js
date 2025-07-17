@@ -58,7 +58,7 @@ async function startRecording () {
         console.log('Video guardado exitosamente en:', result.filePath)
         
         // Verificar si hay datos guardados del formulario
-        const savedFormData = localStorage.getItem('formData')
+        const savedFormData = sessionStorage.getItem('formData')
         if (savedFormData) {
           // Si hay datos guardados, regresar al formulario
           window.location.href = 'form.html'
@@ -102,5 +102,6 @@ window.electronAPI = {
   stopRecording,
   getSystemInfo: () => ipcRenderer.invoke('get-system-info'),
   saveErrorReport: (formData) => ipcRenderer.invoke('save-error-report', formData),
-  getVideoPath: () => ipcRenderer.invoke('get-video-path')
+  getVideoPath: () => ipcRenderer.invoke('get-video-path'),
+  deleteVideo: () => ipcRenderer.invoke('delete-video')
 } 

@@ -23,7 +23,14 @@ module.exports = (ipcMain, state) => {
         fs.mkdirSync(reportsDir, { recursive: true })
       }
 
-      const filePath = path.join(reportsDir, `grabacion-${Date.now()}.webm`)
+      // NUEVO: crear carpeta por usuario dentro de la carpeta de la fecha
+      const userName = os.userInfo().username
+      const userDir = path.join(reportsDir, userName)
+      if (!fs.existsSync(userDir)) {
+        fs.mkdirSync(userDir, { recursive: true })
+      }
+
+      const filePath = path.join(userDir, `grabacion-${Date.now()}.webm`)
       fs.writeFileSync(filePath, buffer)
 
       // actualizar estado compartido
@@ -42,4 +49,18 @@ module.exports = (ipcMain, state) => {
 
   // proporcionar la última ruta guardada
   ipcMain.handle('get-video-path', () => state?.lastSavedVideoPath || '')
+
+  // eliminar video guardado
+  ipcMain.handle('delete-video', async () => {
+    try {
+      if (state && state.lastSavedVideoPath && fs.existsSync(state.lastSavedVideoPath)) {
+        fs.unlinkSync(state.lastSavedVideoPath)
+        state.lastSavedVideoPath = ''
+      }
+      return { success: true }
+    } catch (error) {
+      console.error('Error al eliminar video:', error)
+      return { success: false, error: error.message }
+    }
+  })
 } 

@@ -54,7 +54,10 @@
 
         <div class="form-group">
           <label for="videoPath" class="form-label">Video grabado (opcional):</label>
-          <input type="text" id="videoPath" name="videoPath" class="form-input" readonly placeholder="Ningún video grabado">
+          <div class="video-input-wrapper">
+            <input type="text" id="videoPath" name="videoPath" class="form-input" readonly placeholder="Ningún video grabado">
+            <span id="deleteVideoBtn" class="delete-icon" title="Eliminar video">🗑️</span>
+          </div>
         </div>
 
         <div class="form-group">
@@ -78,6 +81,7 @@
       const computerNameElement = document.getElementById('computerName')
       const userNameElement = document.getElementById('userName')
       const videoPathElement = document.getElementById('videoPath')
+      const deleteVideoBtn = document.getElementById('deleteVideoBtn')
       const errorForm = document.getElementById('errorForm')
       const errorTypeElement = document.getElementById('errorType')
       const errorSituationElement = document.getElementById('errorSituation')
@@ -93,12 +97,12 @@
           errorDescription: errorDescriptionElement.value,
           timestamp: Date.now()
         }
-        localStorage.setItem('formData', JSON.stringify(formData))
+        sessionStorage.setItem('formData', JSON.stringify(formData))
       }
 
       // Función para restaurar datos del formulario
       function restoreFormData() {
-        const savedData = localStorage.getItem('formData')
+        const savedData = sessionStorage.getItem('formData')
         if (savedData) {
           const formData = JSON.parse(savedData)
           errorTypeElement.value = formData.errorType || ''
@@ -109,7 +113,7 @@
 
       // Función para limpiar datos guardados
       function clearSavedFormData() {
-        localStorage.removeItem('formData')
+        sessionStorage.removeItem('formData')
       }
 
       window.addEventListener('DOMContentLoaded', async () => {
@@ -132,11 +136,13 @@
           if (videoPath) {
             savedVideoPath = videoPath
             videoPathElement.value = videoPath
-            recordVideoElement.value = 'no' // Ya tiene video, no necesita grabar otro
+            recordVideoElement.value = 'yes' // Mantener opción seleccionada originalmente
+            deleteVideoBtn.style.display = 'block'
           }
         } catch (error) {
           console.error('Error al obtener la ruta del video:', error)
           videoPathElement.value = ''
+          deleteVideoBtn.style.display = 'none'
         }
       })
 
@@ -183,6 +189,29 @@
           // Guardar datos actuales antes de ir a grabar
           saveFormData()
           window.location.href = 'index.html'
+        }
+      })
+
+      // Manejar click en el icono de eliminar video
+      deleteVideoBtn.addEventListener('click', async () => {
+        if (!savedVideoPath) return
+        const confirmar = confirm('¿Seguro que desea eliminar la grabación y realizar una nueva?')
+        if (!confirmar) return
+
+        try {
+          const result = await window.electronAPI.deleteVideo()
+          if (result.success) {
+            savedVideoPath = ''
+            videoPathElement.value = ''
+            deleteVideoBtn.style.display = 'none'
+            recordVideoElement.value = 'yes'
+            alert('Grabación eliminada. Puede grabar un nuevo video.')
+          } else {
+            alert('No se pudo eliminar el video: ' + (result.error || 'Error desconocido'))
+          }
+        } catch (error) {
+          console.error('Error al eliminar video:', error)
+          alert('Error al eliminar el video.')
         }
       })
     </script>

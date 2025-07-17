@@ -18,6 +18,9 @@
   margin-bottom: 30px;
 }
 
+
+
+
 .form-label {
   display: block;
   margin-bottom: 10px;
@@ -138,7 +141,31 @@
   }
 }
 
+
+
+
 /* Ocultar información del sistema (usuario y computadora) */
 .system-info {
   display: none !important;
+} 
+
+/* Estilo para contenedor del input de video y el icono de borrado */
+.video-input-wrapper {
+  position: relative;
+}
+
+.delete-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  font-size: 18px;
+  color: #888;
+  user-select: none;
+  display: none; /* se muestra solo cuando hay video */
+}
+
+.delete-icon:hover {
+  color: #e74c3c;
 } 
