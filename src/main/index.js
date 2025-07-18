@@ -9,7 +9,7 @@ const sharedState = {
 // registrar handlers IPC
 require('./handlers/video')(ipcMain, sharedState)
 require('./handlers/system')(ipcMain)
-require('./handlers/report')(ipcMain)
+require('./handlers/report')(ipcMain, sharedState)
 
 app.whenReady().then(createMainWindow)
 
