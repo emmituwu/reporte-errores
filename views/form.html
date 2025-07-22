@@ -76,6 +76,18 @@
       </form>
     </div>
 
+    <!-- Modal para opciones después de eliminar video -->
+    <div id="deleteVideoModal" class="modal">
+      <div class="modal-content">
+        <h3>Video eliminado</h3>
+        <p>¿Qué desea hacer ahora?</p>
+        <div class="modal-actions">
+          <button id="recordNewVideoBtn" class="btn-record-new">Grabar nuevo video</button>
+          <button id="continueWithoutVideoBtn" class="btn-continue">Continuar sin video</button>
+        </div>
+      </div>
+    </div>
+
     <script src="../src/renderer/recorder.js"></script>
     <script>
       const computerNameElement = document.getElementById('computerName')
@@ -87,6 +99,9 @@
       const errorSituationElement = document.getElementById('errorSituation')
       const errorDescriptionElement = document.getElementById('errorDescription')
       const recordVideoElement = document.getElementById('recordVideo')
+      const deleteVideoModal = document.getElementById('deleteVideoModal')
+      const recordNewVideoBtn = document.getElementById('recordNewVideoBtn')
+      const continueWithoutVideoBtn = document.getElementById('continueWithoutVideoBtn')
       let savedVideoPath = ''
 
       // Función para guardar datos del formulario
@@ -114,6 +129,24 @@
       // Función para limpiar datos guardados
       function clearSavedFormData() {
         sessionStorage.removeItem('formData')
+      }
+
+      // Función para mostrar el modal
+      function showDeleteVideoModal() {
+        deleteVideoModal.style.display = 'flex'
+      }
+
+      // Función para ocultar el modal
+      function hideDeleteVideoModal() {
+        deleteVideoModal.style.display = 'none'
+      }
+
+      // Función para limpiar el video
+      function clearVideo() {
+        savedVideoPath = ''
+        videoPathElement.value = ''
+        deleteVideoBtn.style.display = 'none'
+        recordVideoElement.value = ''
       }
 
       window.addEventListener('DOMContentLoaded', async () => {
@@ -195,23 +228,40 @@
       // Manejar click en el icono de eliminar video
       deleteVideoBtn.addEventListener('click', async () => {
         if (!savedVideoPath) return
-        const confirmar = confirm('¿Seguro que desea eliminar la grabación y realizar una nueva?')
+        const confirmar = confirm('¿Seguro que desea eliminar la grabación?')
         if (!confirmar) return
 
         try {
           const result = await window.electronAPI.deleteVideo()
           if (result.success) {
-            savedVideoPath = ''
-            videoPathElement.value = ''
-            deleteVideoBtn.style.display = 'none'
-            recordVideoElement.value = 'yes'
-            alert('Grabación eliminada. Puede grabar un nuevo video.')
+            clearVideo()
+            showDeleteVideoModal() // Mostrar modal con opciones
           } else {
             alert('No se pudo eliminar el video: ' + (result.error || 'Error desconocido'))
           }
         } catch (error) {
           console.error('Error al eliminar video:', error)
           alert('Error al eliminar el video.')
+        }
+      })
+
+      // Manejar click en "Grabar nuevo video"
+      recordNewVideoBtn.addEventListener('click', () => {
+        hideDeleteVideoModal()
+        saveFormData() // Guardar datos actuales antes de ir a grabar
+        window.location.href = 'index.html'
+      })
+
+      // Manejar click en "Continuar sin video"
+      continueWithoutVideoBtn.addEventListener('click', () => {
+        hideDeleteVideoModal()
+        recordVideoElement.value = 'no'
+      })
+
+      // Cerrar modal al hacer click fuera de él
+      deleteVideoModal.addEventListener('click', (event) => {
+        if (event.target === deleteVideoModal) {
+          hideDeleteVideoModal()
         }
       })
     </script>
