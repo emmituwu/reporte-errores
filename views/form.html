@@ -71,7 +71,7 @@
 
         <div class="form-actions">
           <button type="submit" class="btn-submit">Enviar Reporte</button>
-          <button type="button" class="btn-cancel" onclick="window.location.href='index.html'">Nueva Grabación</button>
+          <button type="button" id="cancelBtn" class="btn-cancel">Cancelar</button>
         </div>
       </form>
     </div>
@@ -262,6 +262,16 @@
       deleteVideoModal.addEventListener('click', (event) => {
         if (event.target === deleteVideoModal) {
           hideDeleteVideoModal()
+        }
+      })
+
+      // Manejar click en "Cancelar"
+      const cancelBtn = document.getElementById('cancelBtn')
+      cancelBtn.addEventListener('click', () => {
+        const confirmar = confirm('¿Seguro que desea cancelar el formulario?')
+        if (confirmar) {
+          sessionStorage.removeItem('formData') // limpiar datos guardados
+          window.location.href = 'welcome.html'
         }
       })
     </script>

@@ -3,14 +3,18 @@ const path = require('path')
 
 function createMainWindow () {
   const win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 700,
+    height: 800,
+    autoHideMenuBar: true, // oculta la barra de menú por defecto
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
       preload: path.join(__dirname, '..', '..', 'preload.js')
     }
   })
+
+  // Aseguramos que la barra no sea visible
+  win.setMenuBarVisibility(false)
 
   win.loadFile('views/welcome.html')
 }

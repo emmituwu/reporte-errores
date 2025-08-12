@@ -1,6 +1,8 @@
 const fs = require('fs')
 const path = require('path')
 const os = require('os')
+const axios = require('axios')
+const FormData = require('form-data')
 
 module.exports = (ipcMain, state) => {
   ipcMain.handle('save-error-report', async (_event, formData) => {
@@ -24,8 +26,8 @@ module.exports = (ipcMain, state) => {
       }
 
       /*
-       * Crear subcarpeta "Reporte N" dentro de la carpeta del usuario.
-       * Cada día los reportes se numerarán de forma incremental.
+       * crear subcarpeta "Reporte N" dentro de la carpeta del usuario.
+       * cada dia los reportes se numerarán de forma incremental.
        */
 
       // Determinar el número de reporte siguiente analizando carpetas existentes
@@ -42,7 +44,7 @@ module.exports = (ipcMain, state) => {
         fs.mkdirSync(reportFolderPath, { recursive: true })
       }
 
-      // Si existe una grabación pendiente, moverla a la carpeta del reporte
+      // si existe una grabacion pendiente, moverla a la carpeta del reporte
       if (state && state.lastSavedVideoPath) {
         try {
           const videoFileName = path.basename(state.lastSavedVideoPath)
@@ -59,7 +61,6 @@ module.exports = (ipcMain, state) => {
       }
 
       const timestamp = Date.now()
-
       // Guardar archivo JSON dentro de la subcarpeta
       const reportFileName = `reporte-${timestamp}.json`
       const reportPath = path.join(reportFolderPath, reportFileName)
@@ -93,10 +94,78 @@ module.exports = (ipcMain, state) => {
       // Limpiar estado de último video guardado para nuevo reporte
       if (state) state.lastSavedVideoPath = ''
 
+      // crear ticket de jira
+      const titulo = `Reporte de error usuario ${formData.userName} ${new Date(formData.timestamp).toLocaleString('es-ES')}`
+      const jiraTicket = await createJiraTicket(titulo, txtContent, formData.userName)
+      // adjuntar el video al ticket creado
+      const videoAttachment = await attachVideoToJiraTicket(jiraTicket.id, formData.videoPath)
+      // adjuntar el video al ticket creado
+
+
+
       return { success: true, reportPath, txtPath, reportFolderPath }
     } catch (error) {
       console.error('Error al guardar reporte:', error)
       return { success: false, error: error.message }
     }
   })
+
+  function getJiraAuthHeader() {
+    const apiToken = process.env.JIRA_API_TOKEN
+    return apiToken
+  }
+
+  async function createJiraTicket(titulo, descripcion, usuario) {
+    const apiURL = 'https://hospitalaleman.atlassian.net/rest/api/2/issue'
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': getJiraAuthHeader()
+    }
+    const body = 
+      {
+        fields: {
+          description: descripcion,
+          duedate: new Date().toISOString().split('T')[0],
+          issuetype: {
+            id: "1"
+          },
+          project: {
+            id: "15933"
+          },
+          summary: titulo
+        },
+        update: {}
+    }
+    const response = await axios.post(apiURL, body, { headers })
+    return response.data
+  }
+
+  async function attachVideoToJiraTicket(ticketId, videoPath) {
+    try {
+      if (!videoPath || !fs.existsSync(videoPath)) {
+        console.warn('No se encontró video para adjuntar o la ruta es inválida.')
+        return null
+      }
+
+      const apiURL = `https://hospitalaleman.atlassian.net/rest/api/2/issue/${ticketId}/attachments`
+
+      const formData = new FormData()
+      formData.append('file', fs.createReadStream(videoPath))
+
+      const headers = {
+        ...formData.getHeaders(), // establece Content-Type con boundary automáticamente
+        'Authorization': getJiraAuthHeader(),
+        'X-Atlassian-Token': 'no-check'
+      }
+
+      const response = await axios.post(apiURL, formData, { headers })
+      return response.data
+    } catch (err) {
+      console.error('Error al adjuntar video a Jira:', err)
+      throw err
+    }
+  }
 } 
+
+    
+

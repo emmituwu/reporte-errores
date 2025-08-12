@@ -70,7 +70,7 @@ async function startRecording () {
         console.error('Error al guardar el video:', result.error)
         alert('No se pudo guardar el video: ' + (result.error || 'Error desconocido'))
       }
-      
+
       recordedChunks.length = 0
     }
 
